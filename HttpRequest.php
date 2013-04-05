@@ -3,6 +3,9 @@
 namespace Atomic;
 
 class HttpRequest {
+
+	public $controllerName;
+
 	protected $params = array();
 	protected $server = array();
 

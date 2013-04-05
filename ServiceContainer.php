@@ -1,6 +1,7 @@
 <?php
 namespace Atomic;
 
+use \PDO;
 class ServiceContainer {
 	/**
 	 * @var Config

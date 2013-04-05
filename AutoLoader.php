@@ -19,9 +19,12 @@ class AutoLoader {
 
 	private $indexFile = '';
 
-	public function __construct(array $paths) {
-		$this->paths = $paths;
+	public function __construct($paths) {
+		if (is_string($paths)) {
+			$paths = array($paths);
+		}
 
+		$this->paths = $paths;
 		$this->indexFile = sys_get_temp_dir() . PATH_SEPARATOR . md5(serialize($paths));
 	}
 
@@ -67,7 +70,10 @@ class AutoLoader {
 		if ($path !== null) {
 			if (file_exists($path)) {
 				require_once $path;
-				return true;
+				if (class_exists($className, false) || interface_exists($className, false)) {
+				// check if it now exists (index could be out of date)
+					return true;
+				}
 			}
 		}
 

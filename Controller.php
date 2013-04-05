@@ -4,22 +4,31 @@ namespace Atomic;
 
 use RuntimeException;
 
-class Controller {
+class Controller extends StrictClass {
 
 	/**
 	 * @var ServiceContainer
 	 */
 	protected $services;
+
 	/**
 	 * @var HttpRequest
 	 */
 	protected $request;
 
-	public function __construct(ServiceContainer $services, HttpRequest $request) {
+	/**
+	 * @var HttpResponse
+	 */
+	protected $response;
+
+	public function __construct(ServiceContainer $services, HttpRequest $request, HttpResponse $response) {
 		$this->services = $services;
 		$this->request = $request;
+		$this->response = $response;
+		$this->init();
 	}
 
+	protected function init() {}
 
 	public function process() {
 		switch ($this->request->type()) {

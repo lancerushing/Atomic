@@ -2,6 +2,8 @@
 
 namespace Atomic;
 
+use RuntimeException;
+
 /**
  * Uses the __set magic function to prevent properties from being set unless they are defined.
  */
