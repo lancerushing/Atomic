@@ -2,13 +2,15 @@
 
 namespace Atomic;
 
+require_once 'StrictClass.php';
+
 use RecursiveDirectoryIterator;
 use RuntimeException;
 use RecursiveIteratorIterator;
 use SplFileInfo;
 use UnexpectedValueException;
 
-class AutoLoader {
+class AutoLoader extends StrictClass {
 
 
 	private $classMap = array();
