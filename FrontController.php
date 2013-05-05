@@ -24,7 +24,7 @@ class FrontController extends Controller {
 
 		if($result) {
 			$controllerName = $this->request->controllerName;
-			$controller = new $controllerName($this->services, $this->request, $this->response);
+			$controller = new $controllerName($this->serviceContainer, $this->request, $this->response);
 			$controller->process();
 		}
 

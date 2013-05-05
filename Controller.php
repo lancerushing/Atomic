@@ -9,7 +9,7 @@ class Controller extends StrictClass {
 	/**
 	 * @var ServiceContainer
 	 */
-	protected $services;
+	protected $serviceContainer;
 
 	/**
 	 * @var HttpRequest
@@ -22,7 +22,7 @@ class Controller extends StrictClass {
 	protected $response;
 
 	public function __construct(ServiceContainer $services, HttpRequest $request, HttpResponse $response) {
-		$this->services = $services;
+		$this->serviceContainer = $services;
 		$this->request = $request;
 		$this->response = $response;
 		$this->init();
