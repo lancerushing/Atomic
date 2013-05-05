@@ -12,6 +12,5 @@ set_include_path(dirname(__DIR__) .
 require_once 'AutoLoader.php';
 
 $autoLoader = new \Atomic\AutoLoader(array(dirname(__DIR__)));
-$autoLoader->setupIndex();
 $autoLoader->register();
 

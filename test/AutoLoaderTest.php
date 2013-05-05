@@ -12,20 +12,22 @@ class AutoLoaderTest extends \PHPUnit_Framework_TestCase {
 
 	protected function setUp() {
 		$this->autoLoader = new AutoLoader(array());
-		$foo = new foo();
 	}
 
 	public function testSetupIndex() {
 		$property = new \ReflectionProperty($this->autoLoader, 'indexFile');
 		$property->setAccessible(true);
 
+		$method = new \ReflectionMethod($this->autoLoader, 'setupIndex');
+		$method->setAccessible(true);
+
 		$fileName = $property->getValue($this->autoLoader);
 		@unlink($fileName);
 
-		$this->autoLoader->setupIndex();
+		$method->invoke($this->autoLoader);
 		$this->assertFileExists($fileName);
 
-		$this->autoLoader->setupIndex();
+		$method->invoke($this->autoLoader);
 
 	}
 

@@ -3,14 +3,16 @@
 namespace Atomic;
 
 use RecursiveDirectoryIterator;
+use RuntimeException;
 use RecursiveIteratorIterator;
 use SplFileInfo;
 use UnexpectedValueException;
 
 class AutoLoader {
 
-	public $useAbsolutePaths = true;
+
 	private $classMap = array();
+	private $paths = array();
 
 	/**
 	 * @var array
@@ -23,22 +25,14 @@ class AutoLoader {
 		if (is_string($paths)) {
 			$paths = array($paths);
 		}
-
-		$this->paths = $paths;
-		$this->indexFile = sys_get_temp_dir() . PATH_SEPARATOR . md5(serialize($paths));
-	}
-
-	public function setupIndex() {
-		if (is_file($this->indexFile)) {
-			$this->classMap = unserialize(file_get_contents($this->indexFile));
-		} else {
-			$this->reScan();
-			$this->saveIndex();
+		foreach($paths as $path) {
+			$fullPath = realpath($path);
+			if (!in_array($fullPath, $this->paths)) {
+				$this->paths[] = $fullPath;
+			}
 		}
-	}
 
-	private function saveIndex() {
-		file_put_contents($this->indexFile, serialize($this->classMap));
+		$this->indexFile = sys_get_temp_dir() . PATH_SEPARATOR . md5(serialize($paths));
 	}
 
 	/**
@@ -46,6 +40,8 @@ class AutoLoader {
 	 * @return boolean Returns true if registration was successful, false otherwise.
 	 */
 	public function register() {
+		$this->setupIndex();
+
 		// as spl_autoload_register() disables __autoload() and this might be unwanted, we put it onto autoload stack
 		if (function_exists('__autoload')) {
 			spl_autoload_register('__autoload');
@@ -54,7 +50,6 @@ class AutoLoader {
 		return spl_autoload_register(array($this, 'classAutoLoad'));
 	}
 
-
 	/**
 	 * @param string $className Name of the class.
 	 * @param bool $rescan
@@ -62,7 +57,7 @@ class AutoLoader {
 	 */
 	public function classAutoLoad($className, $rescan=true) {
 		if (class_exists($className, false) || interface_exists($className, false)) {
-			return false;
+			return true;
 		}
 
 		$path = isset($this->classMap[$className]) ? $this->classMap[$className] : null;
@@ -87,6 +82,18 @@ class AutoLoader {
 		}
 		return $result;
 	}
+	private function setupIndex() {
+		if (is_file($this->indexFile)) {
+			$this->classMap = unserialize(file_get_contents($this->indexFile));
+		} else {
+			$this->reScan();
+			$this->saveIndex();
+		}
+	}
+
+	private function saveIndex() {
+		file_put_contents($this->indexFile, serialize($this->classMap));
+	}
 
 	private function reScan() {
 		$this->classMap = array();
@@ -94,7 +101,6 @@ class AutoLoader {
 			$this->scanDirectory($path);
 		}
 	}
-
 
 	private function scanDirectory($dirName) {
 		$files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dirName),
@@ -109,23 +115,20 @@ class AutoLoader {
 	}
 
 
-	protected function checkFile(SplFileInfo $fileInfo) {
+	private function checkFile(SplFileInfo $fileInfo) {
 		return $fileInfo->isFile() &&
 			$fileInfo->isReadable() &&
 			$this->checkExtension($fileInfo);
 	}
 
 
-	protected function checkExtension(SplFileInfo $fileInfo) {
+	private function checkExtension(SplFileInfo $fileInfo) {
 		return in_array($fileInfo->getExtension(), $this->extensions);
 	}
 
 
-	protected function scanFileContent(SplFileInfo $fileInfo) {
+	private function scanFileContent(SplFileInfo $fileInfo) {
 		$fileName = $fileInfo->getRealPath();
-		if (!$this->useAbsolutePaths) {
-			$fileName = $fileInfo->getFilename();
-		}
 
 		$content = file_get_contents($fileName);
 
