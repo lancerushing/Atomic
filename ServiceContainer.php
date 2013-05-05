@@ -8,19 +8,10 @@ class ServiceContainer {
 	 */
 	protected $config;
 
+	protected $containerIndex = array();
+
 	public function __construct() {
 		$this->config = new Config();
-	}
-
-	/**
-	 * @return Mailer
-	 */
-	public function mailer() {
-		$cacheKey = __METHOD__;
-		if (!isset($this->objectCache[$cacheKey])) {
-			$this->objectCache[$cacheKey] = new Mailer();
-		}
-		return $this->objectCache[$cacheKey];
 	}
 
 	/**
@@ -28,14 +19,13 @@ class ServiceContainer {
 	 */
 	public function pdo() {
 		$cacheKey = __METHOD__;
-		if (!isset($this->objectCache[$cacheKey])) {
+		if (!isset($this->containerIndex[$cacheKey])) {
+			$pdo = new PDO($this->config->databaseDsn, $this->config->databaseUserName, $this->config->databasePassword, array(PDO::ATTR_PERSISTENT => true));
+			$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-			$this->objectCache[$cacheKey] = new PDO($this->config->databaseDsn, $this->config->databaseUserName, $this->config->databasePassword, array(PDO::ATTR_PERSISTENT => true)
-
-			);
-			$this->objectCache[$cacheKey]->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+			$this->containerIndex[$cacheKey] = $pdo;
 		}
-		return $this->objectCache[$cacheKey];
+		return $this->containerIndex[$cacheKey];
 	}
 
 
