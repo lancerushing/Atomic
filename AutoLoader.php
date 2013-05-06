@@ -14,6 +14,7 @@ class AutoLoader extends StrictClass {
 
 	private $classMap = array();
 	private $paths = array();
+	private $scannedFiles = array();
 
 	/**
 	 * @var array
@@ -118,9 +119,13 @@ class AutoLoader extends StrictClass {
 	private function checkFile(SplFileInfo $fileInfo) {
 		return $fileInfo->isFile() &&
 			$fileInfo->isReadable() &&
-			$this->checkExtension($fileInfo);
+			$this->checkExtension($fileInfo) &&
+		    $this->notScanned($fileInfo);
 	}
 
+	private function notScanned(SplFileInfo $fileInfo) {
+		return !in_array($fileInfo->getRealPath(), $this->scannedFiles);
+	}
 
 	private function checkExtension(SplFileInfo $fileInfo) {
 		return in_array($fileInfo->getExtension(), $this->extensions);
@@ -164,6 +169,8 @@ class AutoLoader extends StrictClass {
 					break;
 			}
 		}
+
+		$this->scannedFiles[] = $fileName;
 	}
 
 	private function dos2unix($fileName) {
