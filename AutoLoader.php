@@ -32,8 +32,7 @@ class AutoLoader extends StrictClass {
 				$this->paths[] = $fullPath;
 			}
 		}
-
-		$this->indexFile = sys_get_temp_dir() . PATH_SEPARATOR . md5(serialize($paths));
+		$this->indexFile = sys_get_temp_dir() . PATH_SEPARATOR . md5(serialize($this->paths));
 	}
 
 	/**
