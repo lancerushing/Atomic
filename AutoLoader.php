@@ -128,7 +128,8 @@ class AutoLoader extends StrictClass {
 	}
 
 	private function checkExtension(SplFileInfo $fileInfo) {
-		return in_array($fileInfo->getExtension(), $this->extensions);
+		//return in_array($fileInfo->getExtension(), $this->extensions); // getExtension() only avail in >= 5.3.6
+		return in_array(pathinfo($fileInfo->getFilename(), PATHINFO_EXTENSION), $this->extensions);
 	}
 
 
