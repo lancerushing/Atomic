@@ -98,6 +98,7 @@ class AutoLoader extends StrictClass {
 
 	private function reScan() {
 		$this->classMap = array();
+		$this->scannedFiles = array();
 		foreach ($this->paths as $path) {
 			$this->scanDirectory($path);
 		}
