@@ -64,13 +64,13 @@ class AutoLoader extends StrictClass {
 		$path = isset($this->classMap[$className]) ? $this->classMap[$className] : null;
 
 		if ($path !== null) {
-			if (file_exists($path)) {
-				require_once $path;
-				if (class_exists($className, false) || interface_exists($className, false)) {
-				// check if it now exists (index could be out of date)
-					return true;
-				}
+
+			@require_once $path;
+			if (class_exists($className, false) || interface_exists($className, false)) {
+			// check if it now exists (index could be out of date)
+				return true;
 			}
+
 		}
 
 		$result = false;
