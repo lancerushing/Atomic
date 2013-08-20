@@ -14,6 +14,7 @@ class AutoLoader extends StrictClass {
 
 	private $classMap = array();
 	private $paths = array();
+	private $skipPaths = array();
 	private $scannedFiles = array();
 
 	/**
@@ -23,7 +24,7 @@ class AutoLoader extends StrictClass {
 
 	private $indexFile = '';
 
-	public function __construct($paths) {
+	public function __construct($paths, $skipPaths=null) {
 		if (is_string($paths)) {
 			$paths = array($paths);
 		}
@@ -33,7 +34,16 @@ class AutoLoader extends StrictClass {
 				$this->paths[] = $fullPath;
 			}
 		}
-		$this->indexFile = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'AutoLoader.' . md5(serialize($this->paths)) . '.idx';
+        if ($skipPaths) {
+            foreach($skipPaths as $path) {
+                $fullPath = realpath($path);
+                if (!in_array($fullPath, $this->skipPaths)) {
+                    $this->skipPaths[] = $fullPath;
+                }
+            }
+        }
+
+		$this->indexFile = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'AutoLoader.' . md5(serialize($this->paths)) . md5(serialize($this->skipPaths)) . '.idx';
 	}
 
 	/**
@@ -100,7 +110,9 @@ class AutoLoader extends StrictClass {
 		$this->classMap = array();
 		$this->scannedFiles = array();
 		foreach ($this->paths as $path) {
-			$this->scanDirectory($path);
+            if ($this->notInSkipPaths($path)) {
+			    $this->scanDirectory($path);
+            }
 		}
 	}
 
@@ -110,7 +122,7 @@ class AutoLoader extends StrictClass {
 
 		/** @var $fileInfo \SplFileInfo */
 		foreach ($files as $fileInfo) {
-			if ($this->checkFile($fileInfo)) {
+            if ($this->checkFile($fileInfo)) {
 				$this->scanFileContent($fileInfo);
 			}
 		}
@@ -121,10 +133,20 @@ class AutoLoader extends StrictClass {
 		return $fileInfo->isFile() &&
 			$fileInfo->isReadable() &&
 			$this->checkExtension($fileInfo) &&
+			$this->notInSkipPaths($fileInfo->getRealPath()) &&
 		    $this->notScanned($fileInfo);
 	}
 
+	private function notInSkipPaths($path) {
+        foreach ($this->skipPaths as $skipPath) {
+            if (preg_match("#^$skipPath#", $path)) {
+                return false;
+            }
+        }
+        return true;
+	}
 	private function notScanned(SplFileInfo $fileInfo) {
+
 		return !in_array($fileInfo->getRealPath(), $this->scannedFiles);
 	}
 
@@ -135,6 +157,7 @@ class AutoLoader extends StrictClass {
 
 
 	private function scanFileContent(SplFileInfo $fileInfo) {
+//        echo nl2br($fileInfo->getRealPath() . PHP_EOL);
 		$fileName = $fileInfo->getRealPath();
 
 		$content = file_get_contents($fileName);
