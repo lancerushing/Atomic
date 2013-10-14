@@ -1,8 +1,5 @@
 {
     "name": "atomic/atomic",
     "version": "1.0.0",
-    "source": {
-	"url": "https://github.com/lancerushing/atomic",
-	"type": "git"
-    }
+    "type": "library"
 }
