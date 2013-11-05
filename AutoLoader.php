@@ -188,8 +188,10 @@ class AutoLoader extends StrictClass {
 					if (false == isset($this->classMap[$className])) {
 						$this->classMap[$className] = $this->dos2unix($fileName);
 					} else {
-						throw new UnexpectedValueException(__METHOD__ . '(): ' . $className . ' is already defined in file: '
-							. $this->classMap[$className] . ' Please rename its duplicate found in ' . $fileName);
+                        if ($this->classMap[$className] !== $fileName) { // some libraries use conditional runtime object definitions
+                            throw new UnexpectedValueException(__METHOD__ . '(): ' . $className . ' is already defined in file: '
+                                . $this->classMap[$className] . ' Please rename its duplicate found in ' . $fileName);
+                        }
 					}
 
 					break;
