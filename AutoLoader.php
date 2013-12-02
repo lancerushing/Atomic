@@ -157,49 +157,93 @@ class AutoLoader extends StrictClass {
 	}
 
 
-	private function scanFileContent(SplFileInfo $fileInfo) {
-//        echo nl2br($fileInfo->getRealPath() . PHP_EOL);
-		$fileName = $fileInfo->getRealPath();
+    /**
+     * Scans the file and adds its classes to the map
+     * @param \SplFileInfo $fileInfo
+     * @throws \UnexpectedValueException
+     */
+    private function scanFileContent(SplFileInfo $fileInfo)
+    {
 
-		$content = file_get_contents($fileName);
+        $fileName = $fileInfo->getRealPath();
+        $classes = $this->findClasses($fileName);
 
-		if (false === $content) {
-			throw new RuntimeException(__METHOD__ . '(): cannot read file: ' . $fileName . '!');
-		}
+        foreach($classes as $className) {
 
-		$namespace_prefix = '';
+            if (false == isset($this->classMap[$className])) {
+                $this->classMap[$className] = $this->dos2unix($fileName);
+            } else {
+                if ($this->classMap[$className] !== $fileName) { // some libraries use conditional runtime obj54.215.11.216arect definitions
+                    throw new UnexpectedValueException(__METHOD__ . '(): ' . $className . ' is already defined in file: '
+                        . $this->classMap[$className] . ' Please rename its duplicate found in ' . $fileName);
+                }
+            }
 
-		$tokens = token_get_all($content);
-		for ($i = 0, $size = count($tokens); $i < $size; $i++) {
-			switch ($tokens[$i][0]) {
-				case T_NAMESPACE:
-					$i += 2; //skip the whitespace token
-					while ($tokens[$i] !== ";") {
-						$namespace_prefix .= $tokens[$i][1];
-						$i++;
-					}
-					$namespace_prefix .= "\\";
-					break;
+        }
 
-				case T_CLASS:
-				case T_INTERFACE:
-					$i += 2; //skip the whitespace token
-					$className = $namespace_prefix . $tokens[$i][1];
-					if (false == isset($this->classMap[$className])) {
-						$this->classMap[$className] = $this->dos2unix($fileName);
-					} else {
-                        if ($this->classMap[$className] !== $fileName) { // some libraries use conditional runtime object definitions
-                            throw new UnexpectedValueException(__METHOD__ . '(): ' . $className . ' is already defined in file: '
-                                . $this->classMap[$className] . ' Please rename its duplicate found in ' . $fileName);
-                        }
-					}
+        $this->scannedFiles[] = $fileName;
+    }
 
-					break;
-			}
-		}
 
-		$this->scannedFiles[] = $fileName;
-	}
+    /**
+     * Extract the classes in the given file
+     *
+     * @param  string            $path The file to check
+     * @throws \RuntimeException
+     * @return array             The found classes
+     * @author composer project
+     */
+    private static function findClasses($path)
+    {
+        $traits = version_compare(PHP_VERSION, '5.4', '<') ? '' : '|trait';
+
+        try {
+            $contents = php_strip_whitespace($path);
+        } catch (\Exception $e) {
+            throw new \RuntimeException('Could not scan for classes inside '.$path.": \n".$e->getMessage(), 0, $e);
+        }
+
+        // return early if there is no chance of matching anything in this file
+        if (!preg_match('{\b(?:class|interface'.$traits.')\s}i', $contents)) {
+            return array();
+        }
+
+        // strip heredocs/nowdocs
+        $contents = preg_replace('{<<<\'?(\w+)\'?(?:\r\n|\n|\r)(?:.*?)(?:\r\n|\n|\r)\\1(?=\r\n|\n|\r|;)}s', 'null', $contents);
+        // strip strings
+        $contents = preg_replace('{"[^"\\\\]*(\\\\.[^"\\\\]*)*"|\'[^\'\\\\]*(\\\\.[^\'\\\\]*)*\'}s', 'null', $contents);
+        // strip leading non-php code if needed
+        if (substr($contents, 0, 2) !== '<?') {
+            $contents = preg_replace('{^.+?<\?}s', '<?', $contents);
+        }
+        // strip non-php blocks in the file
+        $contents = preg_replace('{\?>.+<\?}s', '?><?', $contents);
+        // strip trailing non-php code if needed
+        $pos = strrpos($contents, '?>');
+        if (false !== $pos && false === strpos(substr($contents, $pos), '<?')) {
+            $contents = substr($contents, 0, $pos);
+        }
+
+        preg_match_all('{
+            (?:
+                 \b(?<![\$:>])(?P<type>class|interface'.$traits.') \s+ (?P<name>[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)
+               | \b(?<![\$:>])(?P<ns>namespace) (?P<nsname>\s+[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\s*\\\\\s*[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*)? \s*[\{;]
+            )
+        }ix', $contents, $matches);
+
+        $classes = array();
+        $namespace = '';
+
+        for ($i = 0, $len = count($matches['type']); $i < $len; $i++) {
+            if (!empty($matches['ns'][$i])) {
+                $namespace = str_replace(array(' ', "\t", "\r", "\n"), '', $matches['nsname'][$i]) . '\\';
+            } else {
+                $classes[] = ltrim($namespace . $matches['name'][$i], '\\');
+            }
+        }
+
+        return $classes;
+    }
 
 	private function dos2unix($fileName) {
 		return str_replace('\\', '/', $fileName);
