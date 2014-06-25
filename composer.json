@@ -1,4 +1,20 @@
 {
     "name": "lancerushing/atomic",
-    "type": "library"
+    "type": "library",
+    "autoload":{
+        "classmap": [
+            "AutoLoader.php",
+            "filters/",
+            "AutoLoader.php",
+            "Config.php",
+            "Controller.php",
+            "ErrorHandler.php",
+            "FrontController.php",
+            "HttpRequest.php",
+            "HttpResponse.php",
+            "ServiceContainer.php",
+            "StrictClass.php",
+            "Utils.php"
+        ]
+    }
 }
