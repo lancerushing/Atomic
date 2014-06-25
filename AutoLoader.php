@@ -30,18 +30,23 @@ class AutoLoader extends StrictClass {
 		}
 		foreach($paths as $path) {
 			$fullPath = realpath($path);
-			if (!in_array($fullPath, $this->paths)) {
-				$this->paths[] = $fullPath;
+			if ($fullPath !== false) {
+				if (!in_array($fullPath, $this->paths)) {
+					$this->paths[] = $fullPath;
+				}
 			}
 		}
-        if ($skipPaths) {
-            foreach($skipPaths as $path) {
-                $fullPath = realpath($path);
-                if (!in_array($fullPath, $this->skipPaths)) {
-                    $this->skipPaths[] = $fullPath;
-                }
-            }
-        }
+
+		if ($skipPaths) {
+			foreach($skipPaths as $path) {
+				$fullPath = realpath($path);
+				if ($fullPath !== false) {
+					if (!in_array($fullPath, $this->skipPaths)) {
+						$this->skipPaths[] = $fullPath;
+					}
+				}
+			}
+		}
 
 		$this->indexFile = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'AutoLoader.' . md5(serialize($this->paths)) . md5(serialize($this->skipPaths)) . '.idx';
 	}
@@ -67,7 +72,8 @@ class AutoLoader extends StrictClass {
 	 * @return bool Returns true if class is loaded, false otherwise.
 	 */
 	public function classAutoLoad($className, $rescan=true) {
-		if (class_exists($className, false) || interface_exists($className, false)) {
+
+		if (class_exists($className, false) || interface_exists($className, false) || trait_exists($className, false)) {
 			return true;
 		}
 
@@ -77,7 +83,7 @@ class AutoLoader extends StrictClass {
             if (file_exists($path)) {
 			    require_once $path;
             }
-			if (class_exists($className, false) || interface_exists($className, false)) {
+			if (class_exists($className, false) || interface_exists($className, false) || trait_exists($className, false)) {
 			// check if it now exists (index could be out of date)
 				return true;
 			}
