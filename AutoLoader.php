@@ -48,7 +48,7 @@ class AutoLoader extends StrictClass {
 			}
 		}
 
-		$this->indexFile = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'AutoLoader.' . md5(serialize($this->paths)) . md5(serialize($this->skipPaths)) . '.idx';
+		$this->indexFile = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'AutoLoader.' . posix_geteuid() . md5(serialize($this->paths)) . md5(serialize($this->skipPaths)) . '.idx';
 	}
 
 	/**
